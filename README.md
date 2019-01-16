@@ -19,7 +19,7 @@ Script steps  : 1  : Compile invalid objects before upgrade
                 8  : extract preupgrade zipped roles
                 9  : execute jar file preupgrade
                 10 : Execute preupgrade fixups
-		            11 : validate integrity of the source database
+		11 : validate integrity of the source database
                 12 : Purge the Recyclebin
                 13 : Gather dictionary statistics
                 14 : report invalid objects
@@ -116,7 +116,7 @@ Script steps  : 1  : Disable triggers
                 20 : drop Guarantee Restore Point for CDB and PDB
                 21 : Show database components
                 
-Sample Output: Oracle DBA - Automation with Ansible Upgrading and Downgrading database 12c to 18c
+Sample Output: Oracle DBA - Automation with Ansible Upgrading and Downgrading database 12c to 18c (https://cloudndba.blogspot.com/2019/01/oracle-dba-automation-with-ansible.html)
 
 References
 # How to Download and Run Oracle's Database Pre-Upgrade Utility (Doc ID 884522.1)
