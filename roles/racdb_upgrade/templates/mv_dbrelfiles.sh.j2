@@ -1,0 +1,22 @@
+source ~/.bash_profile
+ORATAB=/etc/oratab
+GIHOME=$(grep ^+ASM ${ORATAB} | awk -F: {'print $2'})
+export NEW_ORACLE_HOME={{ new_oracle_home }}
+export OLD_ORACLE_HOME={{ old_oracle_home }}
+
+for node in `${GIHOME}/bin/olsnodes`
+  do
+    LogMsg "STEP $STEP: Move database related files to new ORACLE_HOME on node $node"
+
+    ssh oracle@$node "mv -v ${OLD_ORACLE_HOME}/dbs/*${TARGET_DBNAME}* ${NEW_ORACLE_HOME}/dbs/"
+
+    RC=$?
+    LogMsg "STEP $STEP: INFO - Exit code is $RC"
+    if [ ${RC} -ne 0 ];
+    then
+      LogMsg "STEP $STEP: FATAL - Unable to move database related files to new ORACLE_HOME on node $node. Exiting !!!"
+      exit 1;
+    else
+      LogMsg "STEP $STEP: INFO - Moved database related files to new ORACLE_HOME on node $node"
+    fi
+  done

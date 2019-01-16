@@ -1,0 +1,135 @@
+---
+
+  - name: TEMPLATE_PreUPGDB | compile invalid database objects
+    template: src=roles/racdb_preupgrade/templates/recomp.sh.j2 dest={{ stage_dir }}/recomp.sh mode=0755
+
+  - name: TEMPLATE_PreUPGDB | disable user triggers
+    template: src=roles/racdb_preupgrade/templates/disable_triggers.sh.j2 dest={{ stage_dir }}/disable_triggers.sh mode=0755
+
+  - name: TEMPLATE_PreUPGDB | disable concurrent statistics gathering
+    template: src=roles/racdb_preupgrade/templates/set_global_stats.sh.j2 dest={{ stage_dir }}/set_global_stats.sh mode=0755
+
+  - name: TEMPLATE_PreUPGDB | database health check
+    template: src=roles/racdb_preupgrade/templates/hcheck4.sh.j2 dest={{ stage_dir }}/hcheck4.sh mode=0755
+
+  - name: TEMPLATE_PreUPGDB | validate the integrity of the source database
+    template: src=roles/racdb_preupgrade/templates/dbupgdiag.sh.j2 dest={{ stage_dir }}/dbupgdiag.sh mode=0755
+
+  - name: TEMPLATE_PreUPGDB | open all pluggable database before upgrade 
+    template: src=roles/racdb_preupgrade/templates/openpdb.sh.j2 dest={{ stage_dir }}/openpdb.sh mode=0755
+
+  - name: TEMPLATE_PreUPGDB | copy pre upgrade zipped roles/racdb_preupgrade/files
+    template: src=roles/racdb_preupgrade/templates/preupgzip.sh.j2 dest={{ stage_dir }}/preupgzip.sh mode=0755
+
+  - name: TEMPLATE_PreUPGDB | pre-upgrade jar file
+    template: src=roles/racdb_preupgrade/templates/preupgradejar.sh.j2 dest={{ stage_dir }}/preupgradejar.sh mode=0755
+
+  - name: TEMPLATE_PreUPGDB | pre-upgrade Information Tool
+    template: src=roles/racdb_preupgrade/templates/preupgfixup.sh.j2 dest={{ stage_dir }}/preupgfixup.sh mode=0755
+
+  - name: TEMPLATE_PreUPGDB | purge-recyclebin Tool
+    template: src=roles/racdb_preupgrade/templates/dbprgrcylbin.sh.j2 dest={{ stage_dir }}/dbprgrcylbin.sh mode=0755
+
+  - name: TEMPLATE_PreUPGDB | gather-dictionary stats Tool
+    template: src=roles/racdb_preupgrade/templates/dbdctstat.sh.j2 dest={{ stage_dir }}/dbdctstat.sh mode=0755
+
+  - name: TEMPLATE_PreUPGDB | report invalid object Tool
+    template: src=roles/racdb_preupgrade/templates/dbinvobj.sh.j2 dest={{ stage_dir }}/dbinvobj.sh mode=0755
+
+  - name: Create LogFile  Directory
+    file:
+     path: /tmp/18cCDBPREUPGRD/{{ oracle_sid }}
+     state: directory
+     owner: "{{ oracle_install_user }}"
+     group: "{{ oracle_install_group }}"
+     mode: 0755
+    when: inventory_hostname in groups['racdb01']
+
+  - name: Copy database SQL script to target database server
+    when: inventory_hostname in groups['racdb01']
+    copy: src=roles/racdb_preupgrade/files/{{ item }} dest={{ stage_dir }} mode=0755
+    with_items:
+      - recomp.sql
+      - disable_triggers.sql
+      - set_global_stats.sql
+      - comps.sql
+      - preupgrade_181_cbuild_5_lf.zip
+      - hcheck4.sql
+      - dbinvobj.sql
+      - dbupgdiag.sql
+      - dbdctstat.sql
+      - dbprgrcylbin.sql
+      - openpdb.sql
+
+  - name: compile invalid database objects
+    when: inventory_hostname in groups['racdb01']
+    remote_user: "{{ oracle_install_user }}"
+    shell: '{{ stage_dir }}/recomp.sh > {{ logdir }}/recomp.log 2>&1'
+
+  - name: Create script to disable user triggers
+    when: inventory_hostname in groups['racdb01']
+    remote_user: "{{ oracle_install_user }}"
+    shell: '{{ stage_dir }}/disable_triggers.sh > {{ logdir }}/disable_triggers.log 2>&1'
+
+  - name: disable concurrent statistics gathering
+    when: inventory_hostname in groups['racdb01']
+    remote_user: "{{ oracle_install_user }}"
+    shell: '{{ stage_dir }}/set_global_stats.sh > {{ logdir }}/set_global_stats.log 2>&1'
+
+  - name: run database health check
+    when: inventory_hostname in groups['racdb01']
+    remote_user: "{{ oracle_install_user }}"
+    shell: '{{ stage_dir }}/hcheck4.sh > {{ logdir }}/hcheck4.log 2>&1'
+
+  - name: disable concurrent statistics gathering
+    when: inventory_hostname in groups['racdb01']
+    remote_user: "{{ oracle_install_user }}"
+    shell: '{{ stage_dir }}/set_global_stats.sh > {{ logdir }}/set_global_stats.log 2>&1'
+
+  - name: validate the integrity of the source database
+    when: inventory_hostname in groups['racdb01']
+    remote_user: "{{ oracle_install_user }}"
+    shell: '{{ stage_dir }}/dbupgdiag.sh > {{ logdir }}/dbupgdiag.log 2>&1'
+
+  - name: open pluggable database if not open
+    when: inventory_hostname in groups['racdb01']
+    remote_user: "{{ oracle_install_user }}"
+    shell: '{{ stage_dir }}/openpdb.sh > {{ logdir }}/openpdb.log 2>&1'
+    ignore_errors: True
+
+  - name: extract preupgrade zipped roles/racdb_preupgrade/files
+    when: inventory_hostname in groups['racdb01']
+    remote_user: "{{ oracle_install_user }}"
+    unarchive: src={{item}} dest={{ stage_dir }}
+    with_items:
+    - preupgrade_181_cbuild_5_lf.zip
+
+  - name: execute jar file preupgrade
+    when: inventory_hostname in groups['racdb01']
+    remote_user: "{{ oracle_install_user }}"
+    shell: export ORACLE_SID={{ oracle_sid }}; {{ stage_dir }}/preupgradejar.sh
+
+  - name: Execute preupgrade fixups
+    when: inventory_hostname in groups['racdb01']
+    remote_user: "{{ oracle_install_user }}"
+    shell: '{{ stage_dir }}/preupgfixup.sh'
+
+  - name: validate integrity of the source database
+    when: inventory_hostname in groups['racdb01']
+    remote_user: "{{ oracle_install_user }}"
+    shell: '{{ stage_dir }}/dbupgdiag.sh > {{ logdir }}/dbupgdiag.log 2>&1'
+
+  - name: Purge the Recyclebin
+    when: inventory_hostname in groups['racdb01']
+    remote_user: "{{ oracle_install_user }}"
+    shell: '{{ stage_dir }}/dbprgrcylbin.sh > {{ logdir }}/dbprgrcylbin.log 2>&1'
+
+  - name: Gather dictionary statistics
+    when: inventory_hostname in groups['racdb01']
+    remote_user: "{{ oracle_install_user }}"
+    shell: '{{ stage_dir }}/dbdctstat.sh > {{ logdir }}/dbdctstat.log 2>&1'
+
+  - name: report invalid objects
+    when: inventory_hostname in groups['racdb01']
+    remote_user: "{{ oracle_install_user }}"
+    shell: '{{ stage_dir }}/dbinvobj.sh > {{ logdir }}/dbinvobj.log 2>&1'

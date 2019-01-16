@@ -1,0 +1,6 @@
+source ~/.bash_profile
+export ORACLE_SID={{ oracle_sid }}
+export ORACLE_HOME={{ oracle_home }}
+export PATH=$PATH:$ORACLE_HOME/bin
+
+{{ oracle_home }}/jdk/bin/java -jar {{ stage_dir }}/preupgrade.jar {{ file }} DIR {{ logdir }}

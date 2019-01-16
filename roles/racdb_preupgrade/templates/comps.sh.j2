@@ -1,0 +1,7 @@
+source ~/.bash_profile
+export ORACLE_SID={{ tgt_db }}
+export ORACLE_HOME={{ tgt_oh }}
+export PATH=$PATH:$ORACLE_HOME/bin
+
+cd {{ scripts_dir }}
+sqlplus -s sys as sysdba @comps.sql

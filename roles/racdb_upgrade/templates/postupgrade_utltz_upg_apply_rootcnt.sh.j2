@@ -1,0 +1,8 @@
+source ~/.bash_profile
+export ORACLE_SID={{ oracle_sid }}
+export ORACLE_HOME={{ new_oracle_home }}
+export PATH=$PATH:$ORACLE_HOME/bin
+
+cd $ORACLE_HOME/rdbms/admin
+$ORACLE_HOME/perl/bin/perl catcon.pl -n 1 -c 'CDB$ROOT' -l {{ logdir }} -b utlzt_upg_apply_root -d '''.''' admin utltz_upg_apply.sql
+

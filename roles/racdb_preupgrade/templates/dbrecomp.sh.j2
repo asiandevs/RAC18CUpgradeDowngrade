@@ -1,0 +1,7 @@
+source ~/.bash_profile
+export ORACLE_SID={{ oracle_sid }}
+export PATH=$PATH:$ORACLE_OHOME/bin
+
+cd {{ scripts_dir }}
+sqlplus -s sys as sysdba @?/rdbms/admin/utlrp.sql
+

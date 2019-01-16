@@ -1,0 +1,6 @@
+source ~/.bash_profile
+export ORACLE_SID={{ oracle_sid }}
+export ORACLE_HOME={{ oracle_home }}
+export PATH=$PATH:$ORACLE_HOME/bin
+
+{{ oracle_home }}/perl/bin/perl -I{{ oracle_home }}/perl/lib -I{{ oracle_home }}/rdbms/admin {{ oracle_home }}/rdbms/admin/catcon.pl -l {{ logdir }}/ -b preup_{{ target_dbuname }} /u01/app/oracle/cfgtoollogs/{{ target_dbuname }}/preupgrade/preupgrade_fixups.sql

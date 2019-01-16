@@ -1,0 +1,7 @@
+source ~/.bash_profile
+export ORACLE_SID={{ oracle_sid }}
+export ORACLE_HOME={{ old_oracle_home }}
+export PATH=$PATH:$ORACLE_HOME/bin
+
+cd {{ scripts_dir }}
+sqlplus -s sys as sysdba @hcheck4.sql

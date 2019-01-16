@@ -1,0 +1,10 @@
+---
+
+old_oracle_home: "/u01/app/oracle/product/12.2.0/db100"
+new_oracle_home: "/u02/app/oracle/product/18.3.0/dbhome_1"
+oh_oracle_base: /u01/app/oracle
+nh_oracle_base: /u02/app/oracle
+tns_admin: "{{ new_oracle_home }}/network/admin"
+
+oracle_install_user: oracle     
+oracle_install_group: oinstall  

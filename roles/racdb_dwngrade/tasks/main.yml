@@ -1,0 +1,183 @@
+---
+
+  - name: TEMPLATE_DWNGDB | compile invalid database objects
+    template: src=roles/racdb_dwngrade/templates/dbdwngrd_recomp.sh.j2 dest={{ stage_dir }}/dbdwngrd_recomp.sh mode=0755
+
+  - name: TEMPLATE_DWNGDB | disable user triggers
+    template: src=roles/racdb_dwngrade/templates/dbdwngrd_disable_triggers.sh.j2 dest={{ stage_dir }}/dbdwngrd_disable_triggers.sh mode=0755
+
+  - name: TEMPLATE_DWNGDB | enable user triggers
+    template: src=roles/racdb_dwngrade/templates/dbdwngrd_enaable_triggers.sh.j2 dest={{ stage_dir }}/dbdwngrd_enable_triggers.sh mode=0755
+
+  - name: TEMPLATE_DWNGDB | purge-recyclebin Tool
+    template: src=roles/racdb_dwngrade/templates/dbdwngrd_dbprgrcylbin.sh.j2 dest={{ stage_dir }}/dbdwngrd_dbprgrcylbin.sh mode=0755
+
+  - name: TEMPLATE_DWNGDB | Show database components (First nodes)
+    template: src=roles/racdb_dwngrade/templates/dbdwngrd_comps.sh.j2 dest={{ stage_dir }}/dbdwngrd_comps.sh mode=0755
+
+  - name: TEMPLATE_DWNGDB | report invalid object Tool
+    template: src=roles/racdb_dwngrade/templates/dbdwngrd_dbinvobj.sh.j2 dest={{ stage_dir }}/dbdwngrd_dbinvobj.sh mode=0755
+
+  - name: Create LogFile  Directory
+    file:
+     path: /tmp/18cCDBDWNGRD/{{ oracle_sid }}
+     state: directory
+     owner: "{{ oracle_install_user }}"
+     group: "{{ oracle_install_group }}"
+     mode: 0755
+
+  - name: Copy database SQL script to target database server
+    when: inventory_hostname in groups['racdb01']
+    copy: src=roles/racdb_dwngrade/files/{{ item }} dest={{ stage_dir }} mode=0755
+    with_items:
+      - recomp.sql
+      - comps.sql
+      - dbinvobj.sql
+      - dbupgdiag.sql
+
+  - name: Dwngrade_Database | disable user trigger [OLD_ORACLE_HOME]
+    when: inventory_hostname in groups['racdb01']
+    remote_user: "{{ oracle_install_user }}"
+    shell: '{{ stage_dir }}/dbdwngrd_disable_triggers.sh > {{ logdir }}/dbdwngrd_disable_triggers.log 2>&1'
+
+  - name: Dwngrade_Database | disable cluster_database database parameter [OLD_ORACLE_HOME]
+    when: inventory_hostname in groups['racdb01']
+    remote_user: "{{ oracle_install_user }}"
+    shell: export ORACLE_HOME={{ old_oracle_home }}; export ORACLE_SID={{ oracle_sid }}; echo "{{ item }};" | {{ old_oracle_home }}/bin/sqlplus / as sysdba
+    register: sqlplus_result
+    failed_when: "'ERROR' in sqlplus_result.stdout or sqlplus_result.rc != 0"
+    with_items:
+      - alter system set cluster_database=false scope=spfile
+
+  - name: Dwngrade_Database | compile invalid database objects [OLD_ORACLE_HOME]
+    when: inventory_hostname in groups['racdb01']
+    remote_user: "{{ oracle_install_user }}"
+    shell: '{{ stage_dir }}/dbdwngrd_recomp.sh > {{ logdir }}/dbdwngrd_recomp.log 2>&1'
+
+  - name: Dwngrade_Database | report invalid objects [OLD_ORACLE_HOME]
+    when: inventory_hostname in groups['racdb01']
+    remote_user: "{{ oracle_install_user }}"
+    shell: '{{ stage_dir }}/dbdwngrd_dbinvobj.sh > {{ logdir }}/dbdwngrd_dbinvobj.log 2>&1'
+
+  - name: Dwngrade_Database | disable database [OLD_ORACLE_HOME]
+    when: inventory_hostname in groups['racdb01']
+    shell: export ORACLE_HOME={{ old_oracle_home }}; export ORACLE_SID={{ oracle_sid }}; export PATH=$PATH:$ORACLE_HOME/bin; srvctl disable database -d {{ target_dbuname }}
+    become_user: "{{ oracle_install_user }}"
+
+  - name: Dwngrade_Database | Stop cluster database [OLD_ORACLE_HOME]
+    when: inventory_hostname in groups['racdb01']
+    shell: export ORACLE_HOME={{ old_oracle_home }}; export ORACLE_SID={{ oracle_sid }}; export PATH=$PATH:$ORACLE_HOME/bin; srvctl stop database -d {{ target_dbuname }}
+    become_user: "{{ oracle_install_user }}"
+
+  - name: Dwngrade_Database | Flashback Pluggable database [OLD_ORACLE_HOME]
+    remote_user: "{{ oracle_install_user }}"
+    when: inventory_hostname in groups['racdb01']
+    shell: export ORACLE_HOME={{ old_oracle_home }}; export ORACLE_SID={{ oracle_sid }}; echo "{{ item }};" | {{ old_oracle_home }}/bin/sqlplus / as sysdba
+    register: sqlplus_result
+    failed_when: "'ERROR' in sqlplus_result.stdout or sqlplus_result.rc != 0"
+    with_items:
+       - startup
+       - FLASHBACK PLUGGABLE DATABASE {{ PDB_NAME }} TO RESTORE POINT {{ RESTORE_POINT }}_{{ PDB_NAME }}
+       - shutdown abort
+    ignore_errors: True
+
+  - name: Dwngrade_Database | Flashback Container database [OLD_ORACLE_HOME]
+    remote_user: "{{ oracle_install_user }}"
+    when: inventory_hostname in groups['racdb01']
+    shell: export ORACLE_HOME={{ old_oracle_home }}; export ORACLE_SID={{ oracle_sid }}; echo "{{ item }};" | {{ old_oracle_home }}/bin/sqlplus / as sysdba
+    register: sqlplus_result
+    failed_when: "'ERROR' in sqlplus_result.stdout or sqlplus_result.rc != 0"
+    with_items:
+       - startup mount
+       - flashback database to restore point {{ RESTORE_POINT }} 
+       - shutdown abort
+
+  - name: Dwngrade_Database | Copy database related files to NEW_ORACLE_HOME
+    remote_user: "{{ oracle_install_user }}"
+    shell: 'cp -vp {{ old_oracle_home }}/dbs/*{{ target_dbname }}* {{ new_oracle_home }}/dbs/'
+
+  - name: Dwngrade_Database | Modify oratab (first nodes)
+    remote_user: "{{ root_user }}"
+    when: inventory_hostname in groups['racdb01']
+    replace:
+        path: "{{ oratab }}"
+        regexp: '{{ target_dbname }}*:{{ old_oracle_home }}'
+        replace: '{{ item }}:{{ new_oracle_home }}'
+    with_items:
+        - "{{ target_dbname }}1"
+
+  - name: Dwngrade_Database | Modify oratab (second nodes)
+    remote_user: "{{ root_user }}"
+    when: inventory_hostname in groups['racdb02']
+    replace:
+        path: "{{ oratab }}"
+        regexp: '{{ target_dbname }}*:{{ old_oracle_home }}'
+        replace: '{{ item }}:{{ new_oracle_home }}'
+    with_items:
+        - "{{ target_dbname }}2"
+
+  - name: Dwngrade_Database | Flashback Container database [NEW_ORACLE_HOME]
+    remote_user: "{{ oracle_install_user }}"
+    when: inventory_hostname in groups['racdb01']
+    shell: export ORACLE_HOME={{ new_oracle_home }}; export ORACLE_SID={{ oracle_sid }}; echo "{{ item }};" | {{ new_oracle_home }}/bin/sqlplus / as sysdba
+    register: sqlplus_result
+    failed_when: "'ERROR' in sqlplus_result.stdout or sqlplus_result.rc != 0"
+    with_items:
+       - startup mount
+       - alter database open RESETLOGS
+       - shut immediate
+
+  - name: Dwngrade_Database | Start database using sqlplus in normal mode [NEW_ORACLE_HOME]
+    remote_user: "{{ oracle_install_user }}"
+    when: inventory_hostname in groups['racdb01']
+    shell: export ORACLE_HOME={{ new_oracle_home }}; export ORACLE_SID={{ oracle_sid }}; echo "{{ item }};" | {{ new_oracle_home }}/bin/sqlplus / as sysdba
+    register: sqlplus_result
+    failed_when: "'ERROR' in sqlplus_result.stdout or sqlplus_result.rc != 0"
+    with_items:
+       - startup
+       - alter pluggable database all open
+
+  - name: Dwngrade_Database | Enable user trigger [NEW_ORACLE_HOME]
+    when: inventory_hostname in groups['racdb01']
+    remote_user: "{{ oracle_install_user }}"
+    shell: 'export ORACLE_HOME={{ new_oracle_home }}; export ORACLE_SID={{ oracle_sid }}; {{ stage_dir }}/dbdwngrd_enable_triggers.sh > {{ logdir }}/dbdwngrd_enable_triggers.log 2>&1'
+
+  - name: Dwngrade_Database | Modify CRS database configuration with new ORACLE_HOME [NEW_ORACLE_HOME]
+    when: inventory_hostname in groups['racdb01']
+    remote_user: "{{ oracle_install_user }}"
+    shell: export ORACLE_HOME={{ old_oracle_home }}; export ORACLE_SID={{ oracle_sid }}; export PATH=$PATH:$ORACLE_HOME/bin; srvctl downgrade database -d {{ target_dbuname }} -o {{ new_oracle_home }} -t {{ OLD_VERSION }}
+
+  - name: Dwngrade_Database | enable cluster_database database parameter [NEW_ORACLE_HOME]
+    remote_user: "{{ oracle_install_user }}"
+    when: inventory_hostname in groups['racdb01']
+    shell: export ORACLE_HOME={{ new_oracle_home }}; export ORACLE_SID={{ oracle_sid }}; export PATH=$PATH:$ORACLE_HOME/bin; echo "{{ item }};" | {{ new_oracle_home }}/bin/sqlplus / as sysdba
+    register: sqlplus_result
+    failed_when: "'ERROR' in sqlplus_result.stdout or sqlplus_result.rc != 0"
+    with_items:
+      - alter system set cluster_database=true scope=spfile
+      - shutdown immediate
+
+  - name: Dwngrade_Database | enable cluster database [NEW_ORACLE_HOME]
+    when: inventory_hostname in groups['racdb01']
+    remote_user: "{{ oracle_install_user }}"
+    shell: export ORACLE_HOME={{ new_oracle_home }}; export ORACLE_SID={{ oracle_sid }}; export PATH=$PATH:$ORACLE_HOME/bin; srvctl enable database -d {{ target_dbuname }}
+
+  - name: Dwngrade_Database | Start cluster database using srvctl [NEW_ORACLE_HOME]
+    when: inventory_hostname in groups['racdb01']
+    become_user: "{{ oracle_install_user }}"
+    shell: export ORACLE_HOME={{ new_oracle_home }}; export ORACLE_SID={{ oracle_sid }}; export PATH=$PATH:$ORACLE_HOME/bin; srvctl start database -d {{ target_dbuname }}
+
+  - name: Upgrade_Database | drop Guarantee Restore Point [NEW_ORACLE_HOME]
+    when: inventory_hostname in groups['racdb01']
+    remote_user: "{{ oracle_install_user }}"
+    shell: export ORACLE_HOME={{ new_oracle_home }}; export ORACLE_SID={{ oracle_sid }}; echo "{{ item }};" | {{ new_oracle_home }}/bin/sqlplus / as sysdba
+    register: sqlplus_result
+    failed_when: "'ERROR' in sqlplus_result.stdout or sqlplus_result.rc != 0"
+    with_items:
+      - drop restore point {{ RESTORE_POINT }}
+      - drop restore point {{ RESTORE_POINT }}_{{ PDB_NAME }} for pluggable database {{ PDB_NAME }} 
+
+  - name: Dwngrade_Database | Show database components [NEW_ORACLE_HOME]
+    when: inventory_hostname in groups['racdb01']
+    remote_user: "{{ oracle_install_user }}"
+    shell: 'export ORACLE_HOME={{ new_oracle_home }}; export ORACLE_SID={{ target_dbname }}; {{ stage_dir }}/dbdwngrd_comps.sh > {{ logdir }}/dbdwngrd_comps.log 2>&1'

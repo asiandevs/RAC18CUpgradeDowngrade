@@ -1,0 +1,62 @@
+---
+
+  - name: TEMPLATE_PreDWNGRD | compile invalid database objects
+    template: src=roles/racdb_predwngrade/templates/recomp.sh.j2 dest={{ stage_dir }}/recomp.sh mode=0755
+
+  - name: TEMPLATE_PreDWNGRD | disable user triggers
+    template: src=roles/racdb_predwngrade/templates/disable_triggers.sh.j2 dest={{ stage_dir }}/disable_triggers.sh mode=0755
+
+  - name: TEMPLATE_PreDWNGRD | purge-recyclebin Tool
+    template: src=roles/racdb_predwngrade/templates/dbprgrcylbin.sh.j2 dest={{ stage_dir }}/dbprgrcylbin.sh mode=0755
+
+  - name: TEMPLATE_PreDWNGRD | report invalid object Tool
+    template: src=roles/racdb_predwngrade/templates/dbinvobj.sh.j2 dest={{ stage_dir }}/dbinvobj.sh mode=0755
+
+  - name: Create LogFile  Directory
+    file:
+     path: /tmp/18cCDBDNGRD/{{ oracle_sid }}
+     state: directory
+     owner: "{{ oracle_install_user }}"
+     group: "{{ oracle_install_group }}"
+     mode: 0755
+
+  - name: Copy database SQL script to target database server
+    when: inventory_hostname in groups['racdb01']
+    copy: src=roles/racdb_predwngrade/files/{{ item }} dest={{ stage_dir }} mode=0755
+    with_items:
+      - recomp.sql
+      - disable_triggers.sql
+      - comps.sql
+      - dbinvobj.sql
+      - dbupgdiag.sql
+      - dbprgrcylbin.sql
+
+  - name: compile invalid database objects
+    when: inventory_hostname in groups['racdb01']
+    remote_user: "{{ oracle_install_user }}"
+    shell: '{{ stage_dir }}/recomp.sh > {{ logdir }}/recomp.log 2>&1'
+
+  - name: Create script to disable user triggers
+    when: inventory_hostname in groups['racdb01']
+    remote_user: "{{ oracle_install_user }}"
+    shell: '{{ stage_dir }}/disable_triggers.sh > {{ logdir }}/disable_triggers.log 2>&1'
+
+  - name: validate the integrity of the source database
+    when: inventory_hostname in groups['racdb01']
+    remote_user: "{{ oracle_install_user }}"
+    shell: '{{ stage_dir }}/dbupgdiag.sh > {{ logdir }}/dbupgdiag.log 2>&1'
+
+  - name: Purge the Recyclebin
+    when: inventory_hostname in groups['racdb01']
+    remote_user: "{{ oracle_install_user }}"
+    shell: '{{ stage_dir }}/dbprgrcylbin.sh > {{ logdir }}/dbprgrcylbin.log 2>&1'
+
+  - name: report invalid objects
+    when: inventory_hostname in groups['racdb01']
+    remote_user: "{{ oracle_install_user }}"
+    shell: '{{ stage_dir }}/dbinvobj.sh > {{ logdir }}/dbinvobj.log 2>&1'
+
+  - name: report database components
+    when: inventory_hostname in groups['racdb01']
+    remote_user: "{{ oracle_install_user }}"
+    shell: '{{ stage_dir }}/comps.sh > {{ logdir }}/comps.log 2>&1'

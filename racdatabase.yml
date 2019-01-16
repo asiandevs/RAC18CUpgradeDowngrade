@@ -1,0 +1,8 @@
+- hosts: all 
+  user: root
+ 
+  roles:
+   #- racdb_preupgrade
+   - racdb_upgrade
+   #- racdb_predwngrade
+   #- racdb_dwngrade

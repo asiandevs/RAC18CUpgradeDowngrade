@@ -1,0 +1,11 @@
+source ~/.bash_profile
+export ORACLE_SID={{ tgt_db }}
+export ORACLE_HOME={{ tgt_oh }}
+export TARGET_DBNAME={{ tgt_db }}
+export TARGET_HOSTNAME={{ TARGET_HOSTNAME }}
+export PATH=$PATH:$ORACLE_HOME/bin
+
+mkdir -p /u03/app/18cCDBUPGRD/${TARGET_DBNAME}
+rm -f /u03/app/18cCDBUPGRD/${TARGET_DBNAME}/*
+mkdir -p /u03/app/18cCDBUPGRD/${TARGET_HOSTNAME}
+cp -p /home/oracle/ansible/sql/* /u03/app/18cCDBUPGRD/${TARGET_DBNAME}

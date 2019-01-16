@@ -1,0 +1,15 @@
+oracle_base: /u01/app/oracle
+oracle_home: "/u01/app/oracle/product/{{ oracle_version }}/db101"
+tns_admin: "{{ oracle_home }}/network/admin"
+stage_dir: /u01/stage
+patch_directory: "{{ stage_dir }}/{{ oracle_version }}/{{ patch_name }}"
+
+env:
+  ORACLE_HOME: "{{ oracle_home }}"
+  ORACLE_BASE: "{{ oracle_base }}"
+  TNS_ADMIN: "{{ tns_admin }}"
+  PATH: "{{ oracle_home }}/bin:{{ oracle_home }}/OPatch:$PATH:/bin:/usr/bin::/usr/ccs/bin"
+
+oracle_install_user: oracle     # User that will own the Oracle Installations.
+oracle_install_group: oinstall  # Primary group for oracle_user.
+patch_name: JUL2018  # Should match psu dictionary variable defined in vars/main.yml

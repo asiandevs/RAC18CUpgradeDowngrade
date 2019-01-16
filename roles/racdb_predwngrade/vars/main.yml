@@ -1,0 +1,15 @@
+---
+
+oracle_install_user:             "oracle"
+oracle_install_group:            "oinstall"
+root_directory:                  "/u01"
+src_scripts_dir:               "/etc/ansible/roles/racdb_preupgrade/files"
+oracle_base: /u01/app/oracle
+new_oracle_home: /u01/app/oracle/product/12.2.0/db100
+stage_dir: /u01/stage
+scripts_dir:               " {{ stage_dir }}"
+target_dbuname:  PMON1_01
+root_user: root
+oracle_sid: PMON11
+old_oracle_home: /u02/app/oracle/product/18.3.0/dbhome_1
+logdir: /tmp/18cCDBDNGRD/{{ oracle_sid }}

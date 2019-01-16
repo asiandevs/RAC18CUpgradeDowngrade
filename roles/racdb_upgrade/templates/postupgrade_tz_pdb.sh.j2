@@ -1,0 +1,8 @@
+source ~/.bash_profile
+export ORACLE_SID={{ oracle_sid }}
+export ORACLE_HOME={{ new_oracle_home }}
+export PATH=$PATH:$ORACLE_HOME/bin
+export PDB_NAME={{ PDB_NAME }}
+
+cd {{ scripts_dir }}
+sqlplus -s sys as sysdba @postupgrade_tz_pdb.sql
