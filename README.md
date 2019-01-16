@@ -47,26 +47,26 @@ Script steps  : 1  : Disable user triggers
                 4  : Report invalid objects before upgrade
                 5  : disable cluster_database database parameter
                 6  : disable database
-				        7  : Stop cluster database
+		7  : Stop cluster database
                	8  : Copy database related files to New Home
-				        9  : Modify oratab
+		9  : Modify oratab
                 10 : Start database in upgrade mode
                 11 : Create guaranteed restore point for rollback
                 12 : Execute catupgrd.sql script to upgrade the database to 18c
-				        13 : Update timezone file version of the pdb database
-				        14 : Update timezone file version of the pdb database
+		13 : Update timezone file version of the pdb database
+		14 : Update timezone file version of the pdb database
                 15 : Start database in normal mode again
                 16 : Execute post upgrade script postupgrade_fixups
-		            17 : Execute post upgrade script exec_utlu122s.sql
+		17 : Execute post upgrade script exec_utlu122s.sql
                 18 : Execute post upgrade script catuppst.sql
-				        19 : Validate the integrity of the source database
+		19 : Validate the integrity of the source database
                 20 : Compile invalid objects after upgrade
-				        21 : Enable user trigger
-				        22 : Modify CRS database configuration with new ORACLE_HOME
-				        23 : Enable cluster_database database parameter 
-				        24 : Enable cluster database
-				        25 : Start cluster database using srvctl 
-				        26 : Show database components
+		21 : Enable user trigger
+		22 : Modify CRS database configuration with new ORACLE_HOME
+		23 : Enable cluster_database database parameter 
+		24 : Enable cluster database
+		25 : Start cluster database using srvctl 
+		26 : Show database components
 
 Ansible role, racdb_predwngrade :
 Script steps  : 1  : Compile invalid objects before upgrade
@@ -75,7 +75,6 @@ Script steps  : 1  : Compile invalid objects before upgrade
                 4  : Purge the Recyclebin
                 5  : Report invalid objects
                 6  : report database components
- 
  
 Variables:		  
 oracle_base:        /u01/app/oracle
@@ -106,17 +105,19 @@ Script steps  : 1  : Disable triggers
                 9  : Flashback Pluggable database 
                 10 : Flashback Container database 
                 11 : Copy database related files to New Home
-				        12 : Modify oratab
+		12 : Modify oratab
                 13 : Resetlogs after Flashback Container database
                 14 : Start database using sqlplus 
                 15 : Enable user trigger 
                 16 : Modify CRS database configuration with new ORACLE_HOME
-				        17 :Enable cluster_database database parameter
-				        18 :enable cluster database
+		17 :Enable cluster_database database parameter
+		18 :enable cluster database
                 19 : Start downgraded database from new ORACLE_HOME with srvctl
                 20 : drop Guarantee Restore Point for CDB and PDB
                 21 : Show database components
                 
+Sample Output: Oracle DBA - Automation with Ansible Upgrading and Downgrading database 12c to 18c
+
 References
 # How to Download and Run Oracle's Database Pre-Upgrade Utility (Doc ID 884522.1)
 # Scripts to automatically update the RDBMS DST (timezone) version in an 11gR2 or 12c database . (Doc ID 1585343.1)
