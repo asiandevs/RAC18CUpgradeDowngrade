@@ -1,14 +1,8 @@
 rem ============================================================================
 rem
-rem Purpose  : Script to remove deprecated database parameters.
-rem Author   : H.M. Mukul
+rem Purpose  : Script for removing deprecated database parameters.
 rem
-rem Parameters: none
-rem
-rem History
-rem ==================
-rem 19-08-2010 H.M. Mukul                created
-rem ============================================================================
+rem ======================================================
 rem
 
 set pause off
