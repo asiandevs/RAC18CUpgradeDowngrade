@@ -1,13 +1,32 @@
-# RAC18CUpgradeDowngrade
+# RAC Database Upgrade with Pluggable database from 12c ---> 18C and Rollback rto 12c
 This is for RAC database upgrade from 12.2 to 18.3 and downgrade from 18.3 to 12.2
 
-Enable roles - 
-  roles:
-   #- racdb_preupgrade             ---> Pre Upgrade script
-   #- racdb_upgrade                ---> Upgrade RAC 12.2 CDB Database to 18.3 with one pluggable database PDB
-   #- racdb_predwngrade            ---> Prep Downgrade script
-   #- racdb_dwngrade               ---> Downgrade Oracle 18.3 database to 12.2 version using Flashback with minimum outage
+```diff
+- NOTE
+! Make sure any Licence requirements from your side. Please do modify based on your own setup. This is purely based on my own lab setup. You can ask me any questions in relate to these playbooks - if you fork and modify to merge - let me know.
+```
 
+```
+References
+# How to Download and Run Oracle's Database Pre-Upgrade Utility (Doc ID 884522.1)
+# Scripts to automatically update the RDBMS DST (timezone) version in an 11gR2 or 12c database . (Doc ID 1585343.1)
+# Database Upgrade Guide: https://docs.oracle.com/en/database/oracle/oracle-database/18/upgrd
+
+```
+```
+
+## Roles
+
+roles                  | tasks
+---------------------- | ----------------------------------------------------------------------
+racdb_preupgrade       |  **Pre Upgrade script**
+racdb_upgrade          |  **Upgrade RAC 12.2 CDB Database to 18.3 with one pluggable database PDB**
+racdb_predwngrade      |  **Prep Downgrade script**
+racdb_dwngrade         |  **Downgrade Oracle 18.3 database to 12.2 version using Flashback with minimum outage*
+
+```
+
+```
 Ansible role, racdb_prepupgrade :
 Script steps  : 1  : Compile invalid objects before upgrade
                 2  : Create script to disable user triggers]
@@ -23,7 +42,8 @@ Script steps  : 1  : Compile invalid objects before upgrade
                 12 : Purge the Recyclebin
                 13 : Gather dictionary statistics
                 14 : report invalid objects
-
+```
+```
 Variables
 src_scripts_dir:   "/etc/ansible/roles/racdb_upgrade/files"
 oracle_base:       /u01/app/oracle
@@ -39,7 +59,8 @@ oratab:            "/etc/oratab"
 RESTORE_POINT:     "BEFORE_UPGRADE"
 CLUSTER:           "racdb01"
 PDB_NAME:          "PMON1PDB"
-             	
+```
+```
 Ansible role, racdb_upgrade :
 Script steps  : 1  : Disable user triggers
                 2  : Remove deprecated parameters
@@ -67,7 +88,8 @@ Script steps  : 1  : Disable user triggers
 		24 : Enable cluster database
 		25 : Start cluster database using srvctl 
 		26 : Show database components
-
+```
+```
 Ansible role, racdb_predwngrade :
 Script steps  : 1  : Compile invalid objects before upgrade
                 2  : Create script to disable user triggers]
@@ -75,7 +97,8 @@ Script steps  : 1  : Compile invalid objects before upgrade
                 4  : Purge the Recyclebin
                 5  : Report invalid objects
                 6  : report database components
- 
+ ```
+ ```
 Variables:		  
 oracle_base:        /u01/app/oracle
 new_oracle_home:    /u01/app/oracle/product/12.2.0/db100
@@ -91,8 +114,8 @@ RESTORE_POINT:      "BEFORE_UPGRADE"
 CLUSTER:            "racdb01"
 PDB_NAME:           "PMON1PDB"
 OLD_VERSION:        "12.2.0.1.0"
-
-			
+```
+```			
 Ansible role, racdb_dwngrade:
 Script steps  : 1  : Disable triggers
                 2  : Disable database parameter cluster_database
@@ -115,10 +138,7 @@ Script steps  : 1  : Disable triggers
                 19 : Start downgraded database from new ORACLE_HOME with srvctl
                 20 : drop Guarantee Restore Point for CDB and PDB
                 21 : Show database components
-                
-Sample Output: Oracle DBA - Automation with Ansible Upgrading and Downgrading database 12c to 18c (https://cloudndba.blogspot.com/2019/01/oracle-dba-automation-with-ansible.html)
-
-References
-# How to Download and Run Oracle's Database Pre-Upgrade Utility (Doc ID 884522.1)
-# Scripts to automatically update the RDBMS DST (timezone) version in an 11gR2 or 12c database . (Doc ID 1585343.1)
-# Database Upgrade Guide: https://docs.oracle.com/en/database/oracle/oracle-database/18/upgrd
+ ```               
+```
+Sample Output: Oracle DBA - Automation with Ansible Upgrading and Downgrading database 12c to 18c 
+```
