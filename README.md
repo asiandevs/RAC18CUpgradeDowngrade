@@ -1,6 +1,8 @@
 ## RAC Database Upgrade with Pluggable database from 12c ---> 18C and Rollback [Downgrade to] to 12c
 This is for RAC database upgrade from 12.2 to 18.3 and downgrade from 18.3 to 12.2
 
+### You can use this for other versions also --- make sure you setup all the variables and value - as an example current version (19..) and target version (21..)
+
 ```diff
 - NOTE
 ! Make sure any Licence requirements from your side. Please do modify based on your own setup. This is purely based on my own lab setup. You can ask me any questions in relate to these playbooks - if you fork and modify to merge - let me know.
