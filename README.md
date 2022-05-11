@@ -1,4 +1,4 @@
-# RAC Database Upgrade with Pluggable database from 12c ---> 18C and Rollback rto 12c
+## RAC Database Upgrade with Pluggable database from 12c ---> 18C and Rollback [Downgrade to] to 12c
 This is for RAC database upgrade from 12.2 to 18.3 and downgrade from 18.3 to 12.2
 
 ```diff
