@@ -141,6 +141,3 @@ Script steps  : 1  : Disable triggers
                 20 : drop Guarantee Restore Point for CDB and PDB
                 21 : Show database components
  ```               
-```
-Sample Output: Oracle DBA - Automation with Ansible Upgrading and Downgrading database 12c to 18c 
-```
